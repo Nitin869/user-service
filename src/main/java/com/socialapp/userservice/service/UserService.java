@@ -43,7 +43,7 @@ public class UserService {
 
     //get user by username
     public UserResponse getUser(String username){
-        User user= userRepository.findByUsername(username).orElseThrow(()->new UsernameNotFoundException("User with username "+ username +" not found"));
+        User user= userRepository.findByUsername(username).orElseThrow(()->new UserNotFoundException("User with username "+ username +" not found"));
         return UserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())

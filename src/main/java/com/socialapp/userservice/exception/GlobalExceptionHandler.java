@@ -19,8 +19,8 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(409, ex.getMessage(), LocalDateTime.now());
     }
 
-    @ExceptionHandler(UsernameNotFoundException.class)
-    public ErrorResponse handleUsernameNotFoundException(UsernameNotFoundException ex){
+    @ExceptionHandler(UserNotFoundException.class)
+    public ErrorResponse handleUserNotFoundException(UserNotFoundException ex){
         return new ErrorResponse(404, ex.getMessage(), LocalDateTime.now());
     }
 
