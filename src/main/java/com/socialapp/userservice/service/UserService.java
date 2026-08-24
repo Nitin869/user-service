@@ -8,6 +8,7 @@ import com.socialapp.userservice.exception.UserNotFoundException;
 import com.socialapp.userservice.model.User;
 import com.socialapp.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,12 +21,15 @@ public class UserService {
 
     //register user
     public UserResponse registerUser(User user){
-        if(userRepository.findByUsername(user.getUsername()).isPresent()){
-            throw new UserNameAlreadyExistException("Username '" + user.getUsername() + "' is already taken");
-        }
+
         if(userRepository.findByEmail(user.getEmail()).isPresent()){
             throw new EmailAlreadyExistException("Email '" + user.getEmail() + "' is already in use");
         }
+
+        if(userRepository.findByUsername(user.getUsername()).isPresent()){
+            throw new UserNameAlreadyExistException("Username '" + user.getUsername() + "' is already taken");
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
         return UserResponse.builder()
@@ -39,7 +43,7 @@ public class UserService {
 
     //get user by username
     public UserResponse getUser(String username){
-        User user= userRepository.findByUsername(username).orElseThrow(()->new UserNotFoundException("User with username "+ username +" not found"));
+        User user= userRepository.findByUsername(username).orElseThrow(()->new UsernameNotFoundException("User with username "+ username +" not found"));
         return UserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
