@@ -1,6 +1,8 @@
 package com.socialapp.userservice.controller;
 
 import com.socialapp.userservice.dto.LoginRequest;
+import com.socialapp.userservice.dto.LoginResponse;
+import com.socialapp.userservice.dto.UpdateUser;
 import com.socialapp.userservice.dto.UserResponse;
 import com.socialapp.userservice.model.User;
 import com.socialapp.userservice.service.UserService;
@@ -28,8 +30,13 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserResponse> loginUser(@RequestBody LoginRequest loginRequest){
+    public ResponseEntity<LoginResponse> loginUser(@RequestBody LoginRequest loginRequest){
         return ResponseEntity.ok(userService.loginUser(loginRequest));
+    }
+
+    @PatchMapping("/{username}/update")
+    public ResponseEntity<UserResponse> updateUser(@PathVariable String username, @RequestBody UpdateUser updateUser){
+        return ResponseEntity.ok(userService.updateUser(username,updateUser));
     }
 
 }
