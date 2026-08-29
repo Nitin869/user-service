@@ -1,9 +1,6 @@
 package com.socialapp.userservice.controller;
 
-import com.socialapp.userservice.dto.LoginRequest;
-import com.socialapp.userservice.dto.LoginResponse;
-import com.socialapp.userservice.dto.UpdateUser;
-import com.socialapp.userservice.dto.UserResponse;
+import com.socialapp.userservice.dto.*;
 import com.socialapp.userservice.model.User;
 import com.socialapp.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +22,9 @@ public class UserController {
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<UserResponse> getUser(@PathVariable String username){
+    public ResponseEntity<UserResponse> getUser(@PathVariable String username,
+                                                @RequestHeader(value = "X-Auth-User", required = false) String authUser){
+        System.out.println("X-Auth-User: " + authUser);
         return ResponseEntity.ok(userService.getUser(username));
     }
 
@@ -37,6 +36,17 @@ public class UserController {
     @PatchMapping("/{username}/update")
     public ResponseEntity<UserResponse> updateUser(@PathVariable String username, @RequestBody UpdateUser updateUser){
         return ResponseEntity.ok(userService.updateUser(username,updateUser));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refreshToken(@RequestBody RefreshRequest refreshRequest) {
+        return ResponseEntity.ok(userService.refreshToken(refreshRequest.getRefreshToken()));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestBody RefreshRequest refreshRequest) {
+        userService.logout(refreshRequest.getRefreshToken());
+        return ResponseEntity.ok("Logged out successfully");
     }
 
 }

@@ -10,6 +10,7 @@ import com.socialapp.userservice.exception.UserNotFoundException;
 import com.socialapp.userservice.model.User;
 import com.socialapp.userservice.repository.UserRepository;
 import com.socialapp.userservice.security.JwtService;
+import com.socialapp.userservice.security.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     //register user
     public UserResponse registerUser(User user){
@@ -64,7 +66,8 @@ public class UserService {
             throw new UserNotFoundException("Invalid username or password");
         }
 
-        String token = jwtService.generateToken(user.getUsername());
+        String accessToken = jwtService.generateToken(user.getUsername());
+        String refreshToken = refreshTokenService.createRefreshToken(user.getId(), user.getUsername());
 
         UserResponse userResponse = UserResponse.builder()
                 .id(user.getId())
@@ -75,9 +78,52 @@ public class UserService {
                 .build();
 
         return LoginResponse.builder()
-                .token(token)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .user(userResponse)
                 .build();
+    }
+
+    // New: refresh
+    public LoginResponse refreshToken(String token) {
+        String data = refreshTokenService.validate(token);
+        if (data == null) {
+            throw new UserNotFoundException("Invalid or expired refresh token. Please login again.");
+        }
+
+        // Token rotation: delete old token
+        refreshTokenService.delete(token);
+
+        // Parse "userId:username"
+        String[] parts = data.split(":");
+        Long userId = Long.parseLong(parts[0]);
+        String username = parts[1];
+
+        // Generate new tokens
+        String newAccessToken = jwtService.generateToken(username);
+        String newRefreshToken = refreshTokenService.createRefreshToken(userId, username);
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        UserResponse userResponse = UserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .name(user.getName())
+                .email(user.getEmail())
+                .bio(user.getBio())
+                .build();
+
+        return LoginResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .user(userResponse)
+                .build();
+    }
+
+    // New: logout
+    public void logout(String token) {
+        refreshTokenService.delete(token);
     }
 
     public UserResponse updateUser(String username, UpdateUser updateUser) {
